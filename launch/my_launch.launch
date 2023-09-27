@@ -12,7 +12,7 @@
 
 	<!-- My Package launch file -->
   	<node pkg="enph353_ros_lab"
-		type="line_follow_monza.py"
+		type="line_follow_spa.py"
        		name="line_follow" 
         	output="screen">
 	</node>

@@ -10,8 +10,12 @@ from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 
-class image_converter:
 
+## \brief This class is used to subscribe to the topic /rrbot/camera1/image_raw, modify the input images and then publish a movement control
+#  Twist message to the topic /cmd_vel.
+class image_converter:
+    
+    ## \brief Initializes the image_converter class.
     def __init__(self):
         self.bridge = CvBridge()
         self.image_sub = rospy.Subscriber('/rrbot/camera1/image_raw',Image,self.callback)
@@ -19,12 +23,13 @@ class image_converter:
         self.twist = Twist()
         self.prev_cx = 400
 
+    ## \brief Callback function that is called when a new image is received.
+    ## \param data The image data from /rrbot/camera1/image_raw.
     def callback(self,data):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
         except CvBridgeError as e:
             print(e)
-        
 
         ##Code to convert the image to a x and y coordinates
         
@@ -45,10 +50,9 @@ class image_converter:
         #  Omit any of the road that might exist ahead. Limits the view to just the
         #  bottom of the screen.
         cropped = blackWhite[700:800, 1:800]
-        finalImg = cropped
+        
         ## Finds the outermost contour of the image and returns the contour as a
         #  list of points.
-
         contours,hierarchy = cv2.findContours(cropped, 1, 2)
 
         ## Only accepts the new contour if one was found. If no contour was found,
@@ -84,7 +88,12 @@ class image_converter:
         except CvBridgeError as e:
             print(e)
 
+    ## \brief Calculates the Twist message based on the x coordinate of the contour.
+    ## \param cx The x coordinate of the contour.
+    ## \return The Twist message which is the correction velocity instructions.
     def steer(cx):
+        
+        ##Code to decide whether to move left, right or straight based on the x coordinate
         newTwist = Twist()
         if cx < 350:
             newTwist.linear.x = 0.3
@@ -97,6 +106,7 @@ class image_converter:
             newTwist.angular.z = 0.0
         return newTwist
 
+## \brief Initializes the ROS node and the image_converter class.
 def main():
     rospy.init_node('image_converter', anonymous=True)
     ic = image_converter()
